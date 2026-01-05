@@ -13,6 +13,9 @@ If you find ha-sip useful, consider starring ⭐ the [GitHub repo](https://githu
 - Optional RTP port range configuration for predictable firewalling
 - Document troubleshooting for "calls connect but no audio" setups
 
+## 5.1.2
+- Fix add-on manifest so Home Assistant shows the configuration UI
+
 ## 5.0
 - Add MQTT topic for call state events
 - Add options for proxy, stun, and turn servers
