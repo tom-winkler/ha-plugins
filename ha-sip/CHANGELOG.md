@@ -8,6 +8,11 @@ If you find ha-sip useful, consider starring ⭐ the [GitHub repo](https://githu
 - Add webhook overwrite option for 'answer' command
 #### Deprecation notice: `platform` in TTS options is replaced by `engine_id`
 
+## 5.1.1
+- Add multi-NIC networking options: bind SIP to a specific IP and (best-effort) advertise media IP for RTP/SDP
+- Optional RTP port range configuration for predictable firewalling
+- Document troubleshooting for "calls connect but no audio" setups
+
 ## 5.0
 - Add MQTT topic for call state events
 - Add options for proxy, stun, and turn servers
