@@ -16,6 +16,10 @@ If you find ha-sip useful, consider starring ⭐ the [GitHub repo](https://githu
 ## 5.1.2
 - Fix add-on manifest so Home Assistant shows the configuration UI
 
+## 5.1.3
+- Fix startup on Home Assistant images using Python 3.13 where stdlib `audioop` is removed
+- Audio conversion keeps producing WAV; uses `ffmpeg` fallback if `pydub` cannot be imported
+
 ## 5.0
 - Add MQTT topic for call state events
 - Add options for proxy, stun, and turn servers
