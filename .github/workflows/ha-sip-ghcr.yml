@@ -25,14 +25,19 @@ jobs:
         include:
           - arch: amd64
             platform: linux/amd64
+            build_from: ghcr.io/hassio-addons/debian-base/amd64:stable
           - arch: aarch64
             platform: linux/arm64
+            build_from: ghcr.io/hassio-addons/debian-base/aarch64:stable
           - arch: armv7
             platform: linux/arm/v7
+            build_from: ghcr.io/hassio-addons/debian-base/armv7:stable
           - arch: armhf
             platform: linux/arm/v6
+            build_from: ghcr.io/hassio-addons/debian-base/armhf:stable
           - arch: i386
             platform: linux/386
+            build_from: ghcr.io/hassio-addons/debian-base/i386:stable
 
     steps:
       - name: Checkout
@@ -91,6 +96,8 @@ jobs:
           file: ha-sip/Dockerfile
           platforms: ${{ matrix.platform }}
           push: true
+          build-args: |
+            BUILD_FROM=${{ matrix.build_from }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ matrix.arch }}-ha-sip:${{ steps.version.outputs.VERSION }}
 
