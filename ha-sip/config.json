@@ -21,6 +21,10 @@
             "log_level": 5,
             "name_server": "",
             "cache_dir": "",
+            "bind_ip": "",
+            "media_ip": "",
+            "rtp_port_min": 0,
+            "rtp_port_max": 0,
             "global_options": ""
         },
         "sip": {
@@ -76,6 +80,10 @@
             "log_level": "int",
             "name_server": "str",
             "cache_dir": "str",
+            "bind_ip": "str?",
+            "media_ip": "str?",
+            "rtp_port_min": "int?",
+            "rtp_port_max": "int?",
             "global_options": "str"
         },
         "sip": {

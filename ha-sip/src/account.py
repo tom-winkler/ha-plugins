@@ -3,67 +3,99 @@ from __future__ import annotations
 import re
 from typing import Optional
 
-import pjsua2 as pj
-
-import call
-import ha
-import incoming_call
-import utils
-from constants import DEFAULT_RING_TIMEOUT
-from event_sender import EventSender
-from log import log
-from command_handler import CommandHandler
-from options_global import GlobalOptions
-from options_sip import SipOptions
+try:
+    import pjsua2 as pj
+except ModuleNotFoundError:
+    pj = None
 
 
-class MyAccountConfig(object):
-    def __init__(
-        self,
-        enabled: bool,
-        index: int,
-        id_uri: str,
-        registrar_uri: str,
-        realm: str,
-        user_name: str,
-        password: str,
-        mode: call.CallHandling,
-        settle_time: float,
-        incoming_call_config: Optional[incoming_call.IncomingCallConfig],
-        options: SipOptions,
-        global_options: GlobalOptions,
-    ):
-        self.enabled = enabled
-        self.index = index
-        self.id_uri = id_uri
-        self.registrar_uri = registrar_uri
-        self.realm = realm
-        self.user_name = user_name
-        self.password = password
-        self.mode = mode
-        self.settle_time = settle_time
-        self.incoming_call_config = incoming_call_config
-        self.options = options
-        self.global_options = global_options
+# Minimal, pjsua2-free implementation used by unit tests.
+if pj is None:
+    class Account:  # type: ignore
+        @staticmethod
+        def is_number_in_list(number: Optional[str], number_list: list[str]) -> bool:
+            def map_to_regex(st: str) -> str:
+                if st == '{*}':
+                    return '.*'
+                if st == '{?}':
+                    return '.'
+                return re.escape(st)
+            if not number:
+                return False
+            for n in number_list:
+                # split by {*} and {?} keeping delimiters
+                n_split = re.split(r'(\{\*}|\{\?})', n)
+                n_regex = '^' + ''.join(map(map_to_regex, n_split)) + '$'
+                match = re.match(n_regex, number)
+                if match:
+                    return True
+            return False
 
 
-class Account(pj.Account):
-    def __init__(
-        self,
-        end_point: pj.Endpoint,
-        config: MyAccountConfig,
-        command_handler: CommandHandler,
-        event_sender: EventSender,
-        ha_config: ha.HaConfig,
-        make_default=False
-    ):
-        pj.Account.__init__(self)
-        self.config = config
-        self.end_point = end_point
-        self.command_handler = command_handler
-        self.event_sender = event_sender
-        self.ha_config = ha_config
-        self.make_default = make_default
+    def create_account(*args, **kwargs):  # type: ignore
+        raise RuntimeError('pjsua2 is required to run ha-sip SIP functionality')
+
+
+else:
+    import call
+    import ha
+    import incoming_call
+    import utils
+    from constants import DEFAULT_RING_TIMEOUT
+    from event_sender import EventSender
+    from log import log
+    from command_handler import CommandHandler
+    from options_global import GlobalOptions
+    from options_sip import SipOptions
+
+
+    class MyAccountConfig(object):
+        def __init__(
+            self,
+            enabled: bool,
+            index: int,
+            id_uri: str,
+            registrar_uri: str,
+            realm: str,
+            user_name: str,
+            password: str,
+            mode: call.CallHandling,
+            settle_time: float,
+            incoming_call_config: Optional[incoming_call.IncomingCallConfig],
+            options: SipOptions,
+            global_options: GlobalOptions,
+        ):
+            self.enabled = enabled
+            self.index = index
+            self.id_uri = id_uri
+            self.registrar_uri = registrar_uri
+            self.realm = realm
+            self.user_name = user_name
+            self.password = password
+            self.mode = mode
+            self.settle_time = settle_time
+            self.incoming_call_config = incoming_call_config
+            self.options = options
+            self.global_options = global_options
+
+
+    class Account(pj.Account):
+        def __init__(
+            self,
+            end_point: pj.Endpoint,
+            config: MyAccountConfig,
+            command_handler: CommandHandler,
+            event_sender: EventSender,
+            ha_config: ha.HaConfig,
+            make_default=False
+        ):
+            pj.Account.__init__(self)
+            self.config = config
+            self.end_point = end_point
+            self.command_handler = command_handler
+            self.event_sender = event_sender
+            self.ha_config = ha_config
+            self.make_default = make_default
 
     def init(self) -> None:
         account_config = pj.AccountConfig()
@@ -160,14 +192,14 @@ class Account(pj.Account):
         return False
 
 
-def create_account(
-    end_point: pj.Endpoint,
-    config: MyAccountConfig,
-    command_handler: CommandHandler,
-    event_sender: EventSender,
-    ha_config: ha.HaConfig,
-    is_default: bool
-) -> Account:
-    account = Account(end_point, config, command_handler, event_sender, ha_config, is_default)
-    account.init()
-    return account
+    def create_account(
+        end_point: pj.Endpoint,
+        config: MyAccountConfig,
+        command_handler: CommandHandler,
+        event_sender: EventSender,
+        ha_config: ha.HaConfig,
+        is_default: bool
+    ) -> Account:
+        account = Account(end_point, config, command_handler, event_sender, ha_config, is_default)
+        account.init()
+        return account

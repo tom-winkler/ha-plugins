@@ -1,7 +1,14 @@
 import argparse
 from argparse import ArgumentParser
 
-from pjsua2 import PJ_TURN_TP_TCP, PJ_TURN_TP_UDP, PJ_TURN_TP_TLS
+try:
+    from pjsua2 import PJ_TURN_TP_TCP, PJ_TURN_TP_UDP, PJ_TURN_TP_TLS
+except ModuleNotFoundError:
+    # Allows running unit tests in environments without pjsua2 installed.
+    # In the add-on container image, pjsua2 is expected to be present.
+    PJ_TURN_TP_TCP = 1
+    PJ_TURN_TP_UDP = 2
+    PJ_TURN_TP_TLS = 3
 from typing_extensions import Literal, Optional, Any
 
 from log import log
@@ -88,16 +95,27 @@ class SipOptions:
 
 def create_parser() -> ArgumentParser:
     parser = argparse.ArgumentParser(prog='sip_options')
+    ice_group = parser.add_mutually_exclusive_group()
     parser.add_argument(
         '--proxy',
         default=None,
         help='Proxy server to use for SIP (default: None)'
     )
-    parser.add_argument(
+    ice_group.add_argument(
         '--ice',
         choices=ALL_BOOL_VALUES,
         default='enabled',
         help='Enable or disable ICE (default: true)'
+    )
+    ice_group.add_argument(
+        '--disable-ice',
+        action='store_true',
+        help='Alias for "--ice disabled"'
+    )
+    ice_group.add_argument(
+        '--enable-ice',
+        action='store_true',
+        help='Alias for "--ice enabled"'
     )
     parser.add_argument(
         '--use-stun-for-sip',
@@ -163,6 +181,12 @@ def parse_sip_options(raw: str, account_index: int = 0) -> SipOptions:
     raw_str = raw if raw else ''
     parser = create_parser()
     args = parser.parse_args(raw_str.split())
+
+    ice_value = args.ice
+    if getattr(args, 'disable_ice', False):
+        ice_value = 'disabled'
+    elif getattr(args, 'enable_ice', False):
+        ice_value = 'enabled'
     if (
         args.turn_server and
         not args.turn_user and
@@ -172,7 +196,7 @@ def parse_sip_options(raw: str, account_index: int = 0) -> SipOptions:
     turn_server = TurnServer(args.turn_server, args.turn_connection_type, args.turn_user, args.turn_password) if args.turn_server else None
     return SipOptions(
         proxy=args.proxy,
-        enable_ice=is_true(args.ice),
+        enable_ice=is_true(ice_value),
         sip_stun_use=is_true(args.use_stun_for_sip),
         sip_media_use=is_true(args.use_stun_for_media),
         contact_rewrite_use=is_true(args.use_contact_rewrite),

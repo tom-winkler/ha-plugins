@@ -13,6 +13,11 @@ NAME_SERVER = os.environ.get('NAME_SERVER', '')
 CACHE_DIR = os.environ.get('CACHE_DIR', '')
 GLOBAL_OPTIONS = os.environ.get('GLOBAL_OPTIONS', '')
 
+BIND_IP = os.environ.get('BIND_IP', '')
+MEDIA_IP = os.environ.get('MEDIA_IP', '')
+RTP_PORT_MIN = os.environ.get('RTP_PORT_MIN', '')
+RTP_PORT_MAX = os.environ.get('RTP_PORT_MAX', '')
+
 SIP1_ENABLED = os.environ.get('SIP1_ENABLED', '')
 SIP1_ID_URI = os.environ.get('SIP1_ID_URI', '')
 SIP1_REGISTRAR_URI = os.environ.get('SIP1_REGISTRAR_URI', '')

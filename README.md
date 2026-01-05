@@ -31,6 +31,10 @@ sip_global:
     log_level: 5 # log level of pjsip library
     name_server: '' # comma separated list of name servers, must be set if sip server must be resolved via SRV record
     cache_dir: '/config/audio_cache' # directory to cache TTS messages or converted audio files. Must be inside /config and existing
+    bind_ip: '' # (optional) bind SIP signalling to this local IP (multi-NIC hosts)
+    media_ip: '' # (optional) advertise this IP in SDP for RTP/media
+    rtp_port_min: 0 # (optional) set RTP port range start
+    rtp_port_max: 0 # (optional) set RTP port range end
     global_options: ''
 sip:
     enabled: true
@@ -85,6 +89,14 @@ webhook:
   --tls {enabled,enable,true,yes,on,1,disabled,disable,false,no,off,0}
                         Enable or disable TLS transport (default: disabled)
   --tls-port TLS_PORT   Port to use for TLS transport (default: 5061)
+    --bind-ip BIND_IP
+                                                Local IP to bind SIP signalling to (default: None)
+    --media-ip MEDIA_IP
+                                                Local IP to advertise for RTP/media in SDP (default: None)
+    --rtp-port-min RTP_PORT_MIN
+                                                Minimum RTP port to use (default: None)
+    --rtp-port-max RTP_PORT_MAX
+                                                Maximum RTP port to use (default: None)
 ```
 
 #### For `options` on each SIP account there are
@@ -93,6 +105,8 @@ webhook:
   --proxy PROXY         Proxy server to use for SIP (default: None)
   --ice {enabled,enable,true,yes,on,1,disabled,disable,false,no,off,0}
                         Enable or disable ICE (default: true)
+    --disable-ice         Alias for "--ice disabled"
+    --enable-ice          Alias for "--ice enabled"
   --use-stun-for-sip {enabled,enable,true,yes,on,1,disabled,disable,false,no,off,0}
                         Enable or disable STUN for sip (default: true)
   --use-stun-for-media {enabled,enable,true,yes,on,1,disabled,disable,false,no,off,0}
@@ -114,6 +128,34 @@ webhook:
   --turn-password TURN_PASSWORD
                         Set the TURN password (default: None)
 ```
+
+## Troubleshooting
+
+### Calls connect but no audio (multi-NIC / VLAN setups)
+
+**Symptoms**
+
+- SIP signalling works and calls connect, but you hear no audio.
+- The SIP peer sends RTP to the wrong subnet because ha-sip advertises the wrong IP in SDP (`c=IN IP4 ...`).
+- ha-sip logs show TX packets but RX stays at `0pkt`.
+
+**Fix**
+
+Force ha-sip to bind SIP signalling to the reachable interface, and advertise the reachable media IP:
+
+```yaml
+sip_global:
+    global_options: "--bind-ip 192.168.178.62 --media-ip 192.168.178.62"
+
+sip:
+    options: "--ice disabled"
+```
+
+Notes:
+
+- `--bind-ip` affects which local interface PJSIP listens on for SIP.
+- `--media-ip` influences which IP is advertised for RTP/media (SDP `c=` line) when supported by the underlying PJSIP build.
+- Disabling ICE is often required for LAN peers like FRITZ!Box to avoid wrong-candidate selection on multi-homed hosts.
 
 ## Usage
 

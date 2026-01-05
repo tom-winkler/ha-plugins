@@ -64,6 +64,22 @@ def get_cache_dir(raw_cache_dir: str) -> Optional[str]:
 
 def main():
     global_options = options_global.parse_global_options(config.GLOBAL_OPTIONS)
+
+    # If configured via Home Assistant add-on UI fields, prefer them over the raw global_options string.
+    bind_ip = config.BIND_IP.strip() if config.BIND_IP else ''
+    if bind_ip:
+        global_options.bind_ip = bind_ip
+    media_ip = config.MEDIA_IP.strip() if config.MEDIA_IP else ''
+    if media_ip:
+        global_options.media_ip = media_ip
+
+    rtp_port_min = utils.convert_to_int(config.RTP_PORT_MIN, 0)
+    if rtp_port_min and rtp_port_min > 0:
+        global_options.rtp_port_min = rtp_port_min
+    rtp_port_max = utils.convert_to_int(config.RTP_PORT_MAX, 0)
+    if rtp_port_max and rtp_port_max > 0:
+        global_options.rtp_port_max = rtp_port_max
+
     name_server = get_name_server(config.NAME_SERVER)
     cache_dir = get_cache_dir(config.CACHE_DIR)
     endpoint_config = sip.MyEndpointConfig(

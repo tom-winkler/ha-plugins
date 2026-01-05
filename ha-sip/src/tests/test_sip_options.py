@@ -1,8 +1,11 @@
 import unittest
 
-from pjsua2 import PJ_TURN_TP_UDP, PJ_TURN_TP_TCP, PJ_TURN_TP_TLS
-
-from options_sip import parse_sip_options
+from options_sip import (
+    PJ_TURN_TP_UDP,
+    PJ_TURN_TP_TCP,
+    PJ_TURN_TP_TLS,
+    parse_sip_options,
+)
 
 
 class SipOptionsTest(unittest.TestCase):
@@ -29,6 +32,10 @@ class SipOptionsTest(unittest.TestCase):
     def test_parse_ice_enabled(self):
         options = parse_sip_options('--ice enabled')
         self.assertEqual(options.enable_ice, True)
+
+    def test_parse_disable_ice_alias(self):
+        options = parse_sip_options('--disable-ice')
+        self.assertEqual(options.enable_ice, False)
 
     def test_parse_sip_stun_use(self):
         options = parse_sip_options('--use-stun-for-sip disabled')

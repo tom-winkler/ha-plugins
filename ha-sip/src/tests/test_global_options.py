@@ -10,6 +10,10 @@ class GlobalOptionsTest(unittest.TestCase):
         self.assertEqual(options.enable_tcp, True)
         self.assertEqual(options.enable_tls, False)
         self.assertEqual(options.stun_server, None)
+        self.assertEqual(options.bind_ip, None)
+        self.assertEqual(options.media_ip, None)
+        self.assertEqual(options.rtp_port_min, None)
+        self.assertEqual(options.rtp_port_max, None)
 
     def test_parse_transport_udp_enabled(self):
         options = parse_global_options('--udp enabled')
@@ -38,3 +42,16 @@ class GlobalOptionsTest(unittest.TestCase):
     def test_parse_stun_server(self):
         options = parse_global_options('--stun-server stun.example.com')
         self.assertEqual(options.stun_server, 'stun.example.com')
+
+    def test_parse_bind_ip(self):
+        options = parse_global_options('--bind-ip 192.168.1.10')
+        self.assertEqual(options.bind_ip, '192.168.1.10')
+
+    def test_parse_media_ip(self):
+        options = parse_global_options('--media-ip 192.168.1.11')
+        self.assertEqual(options.media_ip, '192.168.1.11')
+
+    def test_parse_rtp_port_range(self):
+        options = parse_global_options('--rtp-port-min 40000 --rtp-port-max 40100')
+        self.assertEqual(options.rtp_port_min, 40000)
+        self.assertEqual(options.rtp_port_max, 40100)
