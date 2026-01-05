@@ -1,0 +1,99 @@
+name: Build & Publish ha-sip (GHCR)
+
+on:
+  push:
+    tags:
+      - 'ha-sip-*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "ha-sip version tag to publish (must match ha-sip/config.json .version), e.g. 5.1.1"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+          - arch: aarch64
+            platform: linux/arm64
+          - arch: armv7
+            platform: linux/arm/v7
+          - arch: armhf
+            platform: linux/arm/v6
+          - arch: i386
+            platform: linux/386
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.version }}"
+          else
+            # refs/tags/ha-sip-5.1.1 or refs/tags/ha-sip-v5.1.1
+            TAG_NAME="${GITHUB_REF_NAME}"
+            VERSION="${TAG_NAME#ha-sip-}"
+            VERSION="${VERSION#v}"
+          fi
+
+          if [[ -z "$VERSION" ]]; then
+            echo "ERROR: Could not determine version" >&2
+            exit 1
+          fi
+
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Verify config.json version matches
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          CONFIG_VERSION="$(jq -r '.version' ha-sip/config.json)"
+          if [[ "$CONFIG_VERSION" != "$VERSION" ]]; then
+            echo "ERROR: Tag/version mismatch: ha-sip/config.json has version '$CONFIG_VERSION' but workflow is publishing '$VERSION'" >&2
+            exit 1
+          fi
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ha-sip
+          file: ha-sip/Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.arch }}-ha-sip:${{ steps.version.outputs.VERSION }}
+
+      - name: Summary
+        run: |
+          echo "Pushed: ghcr.io/${{ github.repository_owner }}/${{ matrix.arch }}-ha-sip:${{ steps.version.outputs.VERSION }}"

@@ -1,6 +1,6 @@
 # Changelog
 
-If you find ha-sip useful, consider starring ⭐ the [GitHub repo](https://github.com/arnonym/ha-plugins)!
+If you find ha-sip useful, consider starring ⭐ the [GitHub repo](https://github.com/tom-winkler/ha-plugins)!
 
 ## 5.1
 - Allow setting voice and other options for TTS messages
